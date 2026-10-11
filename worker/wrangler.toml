@@ -1,0 +1,11 @@
+name       = "linkedin-job-capture"
+main       = "index.js"
+compatibility_date = "2024-01-01"
+
+[[r2_buckets]]
+binding    = "JOBS_BUCKET"
+bucket_name = "lin-jobs"
+
+# API_KEY is a secret — set it with:
+#   wrangler secret put API_KEY
+# Never put the actual value in this file.

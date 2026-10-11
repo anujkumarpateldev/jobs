@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Job Capture</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #F4F6FB;
+      --surface:    #FFFFFF;
+      --border:     #DDE1EC;
+      --text-1:     #0F172A;
+      --text-2:     #64748B;
+      --text-3:     #94A3B8;
+      --accent:     #1D4ED8;
+      --accent-bg:  #EFF6FF;
+      --success:    #059669;
+      --success-bg: #ECFDF5;
+      --success-bd: #A7F3D0;
+      --error:      #DC2626;
+      --error-bg:   #FEF2F2;
+      --error-bd:   #FECACA;
+      --radius:     8px;
+    }
+
+    body {
+      font: 13px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text-1);
+      width: 380px;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px 8px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-icon { width: 24px; height: 24px; flex-shrink: 0; }
+    .brand-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-1);
+      letter-spacing: -.01em;
+    }
+
+    .header-btns { display: flex; align-items: center; gap: 4px; }
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-2);
+      padding: 5px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+    }
+    .icon-btn:hover  { background: var(--bg); color: var(--text-1); }
+    .icon-btn.active { background: var(--accent-bg); color: var(--accent); }
+
+    /* ── Views ──────────────────────────────────────────── */
+    /* Main */
+    #view-main { padding: 10px 12px 0; }
+
+    /* Loading */
+    .skeleton {
+      background: linear-gradient(90deg, #E2E8F0 25%, #EDF2F7 50%, #E2E8F0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer {
+      from { background-position: 200% 0; }
+      to   { background-position: -200% 0; }
+    }
+    #loading { padding-bottom: 12px; }
+    .skel-title { height: 17px; width: 78%; margin-bottom: 8px; }
+    .skel-co    { height: 13px; width: 44%; margin-bottom: 6px; }
+    .skel-meta  { height: 11px; width: 62%; }
+
+    /* Error */
+    .alert {
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .alert.error   { background: var(--error-bg);   border: 1px solid var(--error-bd);   color: var(--error); }
+    .alert.success { background: var(--success-bg); border: 1px solid var(--success-bd); color: var(--success); }
+    #error-view { padding-bottom: 12px; }
+
+    /* Job card */
+    .job-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 11px 13px;
+      margin-bottom: 10px;
+    }
+    .job-title   { font-size: 15px; font-weight: 700; line-height: 1.3; margin-bottom: 3px; }
+    .job-company { font-size: 13px; color: var(--text-1); margin-bottom: 6px; }
+    .job-meta    { display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 11px; color: var(--text-2); }
+
+    .desc-toggle {
+      display: none;
+      margin-top: 9px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--accent);
+      padding: 0;
+    }
+    .desc-toggle.visible  { display: inline-block; }
+    .desc-toggle:hover    { text-decoration: underline; }
+    .desc-panel {
+      margin-top: 7px;
+      padding: 8px;
+      background: var(--bg);
+      border-radius: 5px;
+      font-size: 11px;
+      color: var(--text-2);
+      line-height: 1.55;
+      white-space: pre-wrap;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    /* Actions */
+    .action-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .btn-ghost {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 12px;
+      font: 12px/1 system-ui;
+      font-weight: 500;
+      color: var(--text-2);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .btn-ghost:hover { border-color: var(--text-2); color: var(--text-1); }
+    .btn-primary {
+      flex: 1;
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font: 13px/1 system-ui;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+    }
+    .btn-primary:hover    { background: #1a44c7; }
+    .btn-primary:disabled { opacity: .5; cursor: default; }
+
+    /* Edit panel */
+    .edit-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 11px 12px;
+      margin-bottom: 10px;
+    }
+    .edit-field { margin-bottom: 7px; }
+    .edit-field:last-child { margin-bottom: 0; }
+    .edit-label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .03em;
+      color: var(--text-2);
+      margin-bottom: 3px;
+    }
+    .edit-panel input,
+    .edit-panel textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 5px 8px;
+      font: 12px/1.4 system-ui;
+      color: var(--text-1);
+      background: var(--bg);
+    }
+    .edit-panel input:focus,
+    .edit-panel textarea:focus { outline: none; border-color: var(--accent); }
+    .edit-panel textarea { resize: vertical; min-height: 72px; }
+    .edit-panel input[readonly] { color: var(--text-2); cursor: default; }
+
+    /* Result banner */
+    #result-banner { margin-bottom: 10px; word-break: break-all; }
+
+    /* ── Settings view ───────────────────────────────────── */
+    #view-settings { padding: 12px; }
+
+    .settings-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      color: var(--text-3);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .dest-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .dest-btn {
+      flex: 1;
+      padding: 8px 4px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-2);
+      cursor: pointer;
+      text-align: center;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .dest-btn:hover  { border-color: var(--text-2); color: var(--text-1); }
+    .dest-btn.active { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+
+    .creds-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 11px 12px;
+      margin-bottom: 12px;
+    }
+    .creds-panel .edit-field { margin-bottom: 7px; }
+    .creds-panel .edit-field:last-child { margin-bottom: 0; }
+    .creds-panel input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 5px 8px;
+      font: 12px/1.4 system-ui;
+      color: var(--text-1);
+      background: var(--bg);
+    }
+    .creds-panel input:focus { outline: none; border-color: var(--accent); }
+    .creds-panel input[type="password"] { letter-spacing: .1em; }
+
+    .settings-note {
+      font-size: 10px;
+      color: var(--text-3);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    #settings-result { margin-top: 8px; }
+
+    /* ── Diagnostics panel ───────────────────────────────── */
+    #view-diag {
+      border-top: 1px solid var(--border);
+      padding: 8px 12px 10px;
+      background: var(--surface);
+    }
+    #diag-out {
+      font: 10px/1.5 ui-monospace, 'Cascadia Code', monospace;
+      color: var(--text-2);
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    /* ── Footer ─────────────────────────────────────────── */
+    footer {
+      display: flex;
+      justify-content: flex-end;
+      padding: 4px 8px 6px;
+      border-top: 1px solid var(--border);
+    }
+
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <!-- Beaver icon (inline SVG scaled to 24px) -->
+      <svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+        <defs>
+          <linearGradient id="hbg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#2b8ae8"/><stop offset="1" stop-color="#0a4f94"/>
+          </linearGradient>
+          <linearGradient id="hfur" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#d89a57"/><stop offset="1" stop-color="#a86a33"/>
+          </linearGradient>
+          <linearGradient id="hteeth" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e3e8ef"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="128" height="128" rx="30" fill="url(#hbg)"/>
+        <circle cx="36" cy="40" r="11" fill="#8a5628"/>
+        <circle cx="36" cy="40" r="6"  fill="#c98a4b"/>
+        <circle cx="92" cy="40" r="11" fill="#8a5628"/>
+        <circle cx="92" cy="40" r="6"  fill="#c98a4b"/>
+        <ellipse cx="64" cy="66" rx="38" ry="34" fill="url(#hfur)"/>
+        <path d="M40 50 Q48 36 66 36" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="4" stroke-linecap="round"/>
+        <ellipse cx="64" cy="86" rx="21" ry="14" fill="#f5e2c8"/>
+        <circle cx="48" cy="58" r="6.5" fill="#fff"/>
+        <circle cx="80" cy="58" r="6.5" fill="#fff"/>
+        <circle cx="49.5" cy="58.5" r="3.6" fill="#1b1209"/>
+        <circle cx="78.5" cy="58.5" r="3.6" fill="#1b1209"/>
+        <path d="M58 77 Q64 73 70 77 Q66 83 64 83 Q62 83 58 77 Z" fill="#1b1209"/>
+        <rect x="58"   y="91" width="5.5" height="15" rx="2.2" fill="url(#hteeth)"/>
+        <rect x="64.5" y="91" width="5.5" height="15" rx="2.2" fill="url(#hteeth)"/>
+      </svg>
+      <span class="brand-name">Job Capture</span>
+    </div>
+    <div class="header-btns">
+      <span id="dest-badge" style="font-size:10px;font-weight:600;color:var(--text-3);padding:3px 6px;border-radius:4px;background:var(--bg)"></span>
+      <!-- Settings gear -->
+      <button class="icon-btn" id="btn-settings" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+      <!-- Re-read -->
+      <button class="icon-btn" id="reextract" title="Re-read page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/>
+          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Main view ── -->
+  <div id="view-main">
+
+    <div style="padding: 10px 12px 0">
+
+      <!-- Loading skeleton -->
+      <div id="loading">
+        <div class="skeleton skel-title"></div>
+        <div class="skeleton skel-co"></div>
+        <div class="skeleton skel-meta"></div>
+      </div>
+
+      <!-- Error -->
+      <div id="error-view" hidden>
+        <div class="alert error" id="error-text"></div>
+      </div>
+
+      <!-- Job card + actions -->
+      <div id="job-view" hidden>
+
+        <div class="job-card">
+          <div class="job-title"   id="disp-title"></div>
+          <div class="job-company" id="disp-company"></div>
+          <div class="job-meta">
+            <span id="disp-location"></span>
+            <span id="disp-workplace"></span>
+            <span id="disp-employment"></span>
+            <span id="disp-date"></span>
+          </div>
+          <button class="desc-toggle" id="desc-toggle">Description</button>
+          <div class="desc-panel" id="desc-panel" hidden></div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn-ghost"   id="btn-edit">Edit fields</button>
+          <button class="btn-primary" id="btn-save">Save job</button>
+        </div>
+
+        <div class="edit-panel" id="edit-panel" hidden>
+          <div class="edit-field"><label class="edit-label">Job ID</label><input id="f-jobid" readonly></div>
+          <div class="edit-field"><label class="edit-label">Title</label><input id="f-title"></div>
+          <div class="edit-field"><label class="edit-label">Company</label><input id="f-company"></div>
+          <div class="edit-field"><label class="edit-label">Location</label><input id="f-location"></div>
+          <div class="edit-field"><label class="edit-label">Workplace type</label><input id="f-workplace"></div>
+          <div class="edit-field"><label class="edit-label">Employment type</label><input id="f-employment"></div>
+          <div class="edit-field"><label class="edit-label">Date posted</label><input id="f-date"></div>
+          <div class="edit-field"><label class="edit-label">Description</label><textarea id="f-description" rows="4"></textarea></div>
+        </div>
+
+        <div class="alert" id="result-banner" hidden></div>
+
+      </div><!-- /job-view -->
+    </div>
+  </div>
+
+  <!-- ── Settings view ── -->
+  <div id="view-settings" hidden>
+
+    <p class="settings-section-label">Save to</p>
+    <div class="dest-row">
+      <button class="dest-btn" data-dest="download">Local</button>
+      <button class="dest-btn" data-dest="cloudflare">Cloudflare</button>
+      <button class="dest-btn" data-dest="s3">Amazon S3</button>
+      <button class="dest-btn" data-dest="github">GitHub</button>
+    </div>
+
+    <!-- Cloudflare credentials -->
+    <div id="sect-cloudflare" hidden>
+      <p class="settings-section-label">Cloudflare Worker</p>
+      <div class="creds-panel">
+        <div class="edit-field">
+          <label class="edit-label">Worker URL</label>
+          <input id="cf-url" type="url" placeholder="https://linkedin-job-capture.yourname.workers.dev">
+          <p class="settings-note">The URL of your deployed Cloudflare Worker.</p>
+        </div>
+        <div class="edit-field">
+          <label class="edit-label">API key</label>
+          <input id="cf-apikey" type="password" placeholder="your-secret-key">
+          <p class="settings-note">Must match the API_KEY secret set in wrangler.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- S3 credentials -->
+    <div id="sect-s3" hidden>
+      <p class="settings-section-label">S3 credentials</p>
+      <div class="creds-panel">
+        <div class="edit-field">
+          <label class="edit-label">Presign endpoint URL</label>
+          <input id="s3-endpoint" type="url" placeholder="https://…/presign">
+          <p class="settings-note">Your Lambda (or similar) that returns a short-lived PUT URL.</p>
+        </div>
+        <div class="edit-field">
+          <label class="edit-label">API key (optional)</label>
+          <input id="s3-apikey" type="password" placeholder="sk-…">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label">Path prefix</label>
+          <input id="s3-prefix" placeholder="linkedin-jobs">
+        </div>
+      </div>
+    </div>
+
+    <!-- GitHub credentials -->
+    <div id="sect-github" hidden>
+      <p class="settings-section-label">GitHub credentials</p>
+      <div class="creds-panel">
+        <div class="edit-field">
+          <label class="edit-label">Owner</label>
+          <input id="gh-owner" placeholder="your-username">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label">Repository</label>
+          <input id="gh-repo" placeholder="job-archive">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label">Branch</label>
+          <input id="gh-branch" placeholder="main">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label">Path prefix</label>
+          <input id="gh-prefix" placeholder="linkedin-jobs">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label">Fine-grained token</label>
+          <input id="gh-token" type="password" placeholder="github_pat_…">
+          <p class="settings-note">Needs contents: read & write on the target repo.</p>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btn-save-settings" style="width:100%">Save settings</button>
+    <div class="alert" id="settings-result" style="margin-top:8px" hidden></div>
+
+  </div>
+
+  <!-- ── Diagnostics panel ── -->
+  <div id="view-diag" hidden>
+    <pre id="diag-out">Running…</pre>
+  </div>
+
+  <!-- Footer with diagnostic button -->
+  <footer>
+    <button class="icon-btn" id="btn-diag" title="Diagnostics">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="4 17 10 11 4 5"/>
+        <line x1="12" y1="19" x2="20" y2="19"/>
+      </svg>
+    </button>
+  </footer>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

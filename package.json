@@ -1,0 +1,12 @@
+{
+  "name": "jobs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension that captures a LinkedIn job posting as JSON (personal use)",
+  "scripts": {
+    "test": "node --test tests/extract.test.cjs"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.0"
+  }
+}

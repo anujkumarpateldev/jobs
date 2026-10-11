@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+*.zip
+.env
+config.local.json
+# Never commit real job exports or unscrubbed LinkedIn pages
+exports/
+fixtures/*-raw.html
